@@ -1,0 +1,10 @@
+#!nsh
+#
+# USB MAVLink start
+#
+
+//Mavlink使用USB来启动
+mavlink start -r 800000 -d /dev/ttyACM0 -m config -x
+
+# Exit shell to make it available to MAVLink
+exit
