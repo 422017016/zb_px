@@ -31,38 +31,63 @@ include $(PX4_BASE)makefiles/setup.mk
 # This assumes that git command is available and that
 # the directory holding this file also contains .git directory
 #
+//获得由git提供的版本字符，假设git命令可以执行，目录也包含.git目录
+//获取到当前的版本号，在linux下测试就是每次commit后有一长串序列号
 GIT_DESC := $(shell git log -1 --pretty=format:%H)
-ifneq ($(words $(GIT_DESC)),1)
+ifneq ($(words $(GIT_DESC)),1)//如果序列号中单词num ==1，则说明有错误
     GIT_DESC := "unknown_git_version"
 endif
 
 GIT_DESC_SHORT := $(shell echo $(GIT_DESC) | cut -c1-16)
+//获取每个git版本的前16个字母组成的单词
 
 #
 # Canned firmware configurations that we (know how to) build.
 #
+//打包固件配置--知道如何去build的
 KNOWN_CONFIGS		:= $(subst config_,,$(basename $(notdir $(wildcard $(PX4_MK_DIR)/$(PX4_TARGET_OS)/config_*.mk))))
+//考虑nuttx为目标系统时本句操作是 
+	//1.获取所有makefiles/nuttx/config_*.mk的文件路径；
+	//2.去掉目录名，只留下config_*.mk
+	//3.去掉.mk后缀，只留下config_*
+	//4.去掉所有的config_前缀，只留下*
+
+//subst 把config_换成空的，即删除单词里边的config_ $(subst ee,EE,feet on the street) 返回值 fEEt on the stEEt
+//basename 取前缀 $(basename src/foo.c src-1.0/bar.c) 返回值 src/foo src-1.0/bar
+//notdir 取文件名 $(notdir src/foo.c hacks) 返回值 foo.c hacks
+//wildcard 获取匹配模式文件名 $(wildcard *.c) 返回值为当前目录下所有.c源文件列表
+
+//最终获得所有已知配置的名称 如下：
+//aerocor_default px4fmu-v1_default px4fmu-v2_default px4fmu-v2_multiplatform
+//px4fmu-v2_test px4io-v1_default px4io-v2_default px4-stm32f4discovery_default
 CONFIGS			?= $(KNOWN_CONFIGS)
 
 #
 # Boards that we (know how to) build NuttX export kits for.
 #
+//知道如何去建立Nuttx export kit的板子
 KNOWN_BOARDS		:= $(subst board_,,$(basename $(notdir $(wildcard $(PX4_MK_DIR)/$(PX4_TARGET_OS)/board_*.mk))))
+//以nuttx为例，在Firmware/makefiles/nuttx/下获得已知配置的板子
+//aerocore px4fmu-v1 px4fmu-v2 px4io-v1 px4io-v2 px4-stm32f4discovery
 BOARDS			?= $(KNOWN_BOARDS)
 
 #
 # Debugging
 #
+//调试 取消读取一个makefile之前打印工作目录
 MQUIET			 = --no-print-directory
 #MQUIET			 = --print-directory
 
 ################################################################################
 # No user-serviceable parts below
 ################################################################################
+/***********************************非用户可使用的区域**********************************************/
 
 #
 # If the user has listed a config as a target, strip it out and override CONFIGS.
 #
+//如果用户已经列表了一个配置作为目标，则把他剥离出来
+
 FIRMWARE_GOAL		 = firmware
 EXPLICIT_CONFIGS	:= $(filter $(CONFIGS),$(MAKECMDGOALS))
 ifneq ($(EXPLICIT_CONFIGS),)
