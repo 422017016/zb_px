@@ -130,6 +130,7 @@ endif
 export CONFIG
 include $(CONFIG_FILE) //运行CONFIG_FLE，这里以 Firmware/makefiles/nuttx/config_px4fmu-v2_default.mk 为例进行研究。进入此文件进行学习。
 $(info %  CONFIG              = $(CONFIG))
+//CONFIG是对MODULES的地址进行加载
 
 #
 # Sanity-check the BOARD variable and then get the board config.
@@ -137,22 +138,28 @@ $(info %  CONFIG              = $(CONFIG))
 #
 # The board config in turn will fetch the toolchain configuration.
 #
+//检测板子
 ifeq ($(BOARD),)
 BOARD			:= $(firstword $(subst _, ,$(CONFIG)))
 endif
-BOARD_FILE		:= $(wildcard $(PX4_MK_DIR)/$(PX4_TARGET_OS)/board_$(BOARD).mk)
+
+//板子文件 是Firmware/makefiles/nuttx/board_px4fmu-v2.mk 这个文件只设置了
+BOARD_FILE		:= $(wildcard $(PX4_MK_DIR)/$(PX4_TARGET_OS)/board_$(BOARD).mk) //这里只是先设置了这个变量，暂时未执行
+
 ifeq ($(BOARD_FILE),)
 $(error Config $(CONFIG) references board $(BOARD), but no board definition file found)
 endif
+
 export BOARD
 export BOARD_FILE
-include $(BOARD_FILE)
+include $(BOARD_FILE) //开始进入Firmware/makefiles/nuttx/board_px4fmu-v2.mk
 $(info %  BOARD               = $(BOARD))
 
 #
 # If WORK_DIR is not set, create a 'build' directory next to the
 # parent Makefile.
 #
+//WORK_DIR 设置工作目录
 PARENT_MAKEFILE		:= $(lastword $(filter-out $(lastword $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
 ifeq ($(WORK_DIR),)
 export WORK_DIR		:= $(dir $(PARENT_MAKEFILE))build/
@@ -162,39 +169,44 @@ $(info %  WORK_DIR            = $(WORK_DIR))
 #
 # Things that, if they change, might affect everything
 #
+//全局依赖项 是添加在MAKEFILE_LIST里边的内容，如果改变一个，则其他一些都要相应改变
 GLOBAL_DEPS		+= $(MAKEFILE_LIST)
 
 #
 # Extra things we should clean
 #
+//额外的清理
 EXTRA_CLEANS		 =
 
 
 #
 # Append the per-board driver directory to the header search path.
 #
-INCLUDE_DIRS		+= $(PX4_MODULE_SRC)drivers/boards/$(BOARD)
+//根据每个板子的驱动目录搜索路径
+INCLUDE_DIRS		+= $(PX4_MODULE_SRC)drivers/boards/$(BOARD) //包含路径 += Firmware/src/drivers/boards/px4fmu-v2 
 
 ################################################################################
 # External library includes
 ################################################################################
-
+//额外的库包含目录 包含路径 += Firmware/src/lib/eigen/ 一种C++的开源矩阵计算工具
 INCLUDE_DIRS		+= $(PX4_BASE)src/lib/eigen/
 
 ################################################################################
 # OS specific libraries and paths
 ################################################################################
-
-include $(PX4_MK_DIR)/$(PX4_TARGET_OS)/$(PX4_TARGET_OS).mk
+//具体系统库和路径
+include $(PX4_MK_DIR)/$(PX4_TARGET_OS)/$(PX4_TARGET_OS).mk //Firmware/makefiles/nuttx/nuttx.mk 进入学习
 
 ################################################################################
 # Modules
 ################################################################################
 
 # where to look for modules
+//搜寻模块的地址 Firmware/Build/px4fmu-v2_default.build/nuttx-export/  Firmware/src/  MODULE_SRC=?
 MODULE_SEARCH_DIRS	+= $(WORK_DIR) $(MODULE_SRC) $(PX4_MODULE_SRC)
 
 # sort and unique the modules list
+//对模块进行排序
 MODULES			:= $(sort $(MODULES))
 
 # locate the first instance of a module by full path or by looking on the
