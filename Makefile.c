@@ -6,7 +6,9 @@
 
 //编译的目标又：nuttx posix posix-arm qurt，make all 的时候就会把所有的都编译了。
 TARGETS	:= nuttx posix posix-arm qurt
-EXPLICIT_TARGET	:= $(filter $(TARGETS),$(MAKECMDGOALS)) //过滤后的目标，将MAKECMDGOALS里边不包含 $(TARGETS) 的去掉
+EXPLICIT_TARGET	:= $(filter $(TARGETS),$(MAKECMDGOALS)) //过滤后的目标，将MAKECMDGOALS里边不包含 $(TARGETS) 的去掉 
+//MAKECMDGOALS是终极目标，输入目标的首个目标
+
 ifneq ($(EXPLICIT_TARGET),)//如果EXPLICIT_TARGET非空
     export PX4_TARGET_OS=$(EXPLICIT_TARGET) //则将目标传递到下一层
     export GOALS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS)) //wordlist 是从第二个字符串取到MAKECMDGOALS的最后一个字符串，即去掉了第一个
@@ -90,20 +92,28 @@ MQUIET			 = --no-print-directory
 
 FIRMWARE_GOAL		 = firmware
 EXPLICIT_CONFIGS	:= $(filter $(CONFIGS),$(MAKECMDGOALS))
+//EXPLICIT_CONFIGS 是将终极目标里边的已知配置的目标过滤出来，组成具体目标
+
 ifneq ($(EXPLICIT_CONFIGS),)
+//如果具体目标非空，则将CONFIGS 赋值为具体目标
 CONFIGS			:= $(EXPLICIT_CONFIGS)
-.PHONY:			$(EXPLICIT_CONFIGS)
+.PHONY:			$(EXPLICIT_CONFIGS) 
+
+//这个目标是make的终极目标，依赖项是all
 $(EXPLICIT_CONFIGS):	all
 
 #
 # If the user has asked to upload, they must have also specified exactly one
 # config.
 #
-ifneq ($(filter upload,$(MAKECMDGOALS)),)
-ifneq ($(words $(EXPLICIT_CONFIGS)),1)
+//如果用户命令烧录程序，还必须有另外一个配置
+
+ifneq ($(filter upload,$(MAKECMDGOALS)),)//过滤终极目标里边的upload 如果非空则执行下一句
+ifneq ($(words $(EXPLICIT_CONFIGS)),1)//如果终极目标里边只有一个单词，即只有upload一个则进行报错
 $(error In order to upload, exactly one board config must be specified)
 endif
-FIRMWARE_GOAL		 = upload
+
+FIRMWARE_GOAL		 = upload //固件目标改变为upload
 .PHONY: upload
 upload:
 	@:
@@ -111,8 +121,11 @@ endif
 endif
 
 ifeq ($(PX4_TARGET_OS),nuttx)
+//如果目标板OS为nuttx，则执行Firmware/makefiles/nuttx/firmware_nuttx.mk,从这里跳进firmware_nuttx.mk去看。
 include $(PX4_BASE)makefiles/nuttx/firmware_nuttx.mk
 endif
+
+//底下三个目标暂时不考虑。
 ifeq ($(PX4_TARGET_OS),posix)
 include $(PX4_BASE)makefiles/posix/firmware_posix.mk
 endif
@@ -123,10 +136,10 @@ ifeq ($(PX4_TARGET_OS),qurt)
 include $(PX4_BASE)makefiles/qurt/firmware_qurt.mk
 endif
 
-qurt_fixup:
+qurt_fixup://这个目标暂时没有执行过
 	makefiles/qurt/setup.sh $(PX4_BASE)
 
-restore:
+restore://存储，暂未执行
 	cd src/lib/eigen && git checkout .
 	git submodule update
 	
