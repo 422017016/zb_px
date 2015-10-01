@@ -211,6 +211,7 @@ MODULES			:= $(sort $(MODULES))
 
 # locate the first instance of a module by full path or by looking on the
 # module search path
+//定位第一个模块的实例，搜索module.mk文档，对这个文档赋值到模块搜索
 define MODULE_SEARCH
 	$(firstword $(abspath $(wildcard $(1)/module.mk)) \
 		$(abspath $(foreach search_dir,$(MODULE_SEARCH_DIRS),$(wildcard $(search_dir)/$(1)/module.mk))) \
@@ -218,6 +219,7 @@ define MODULE_SEARCH
 endef
 
 # make a list of module makefiles and check that we found them all
+//制作一个module的表，并且检查这些module是否都能找到，每一个模块都有相应的module.mk文件
 MODULE_MKFILES		:= $(foreach module,$(MODULES),$(call MODULE_SEARCH,$(module)))
 MISSING_MODULES		:= $(subst MISSING_,,$(filter MISSING_%,$(MODULE_MKFILES)))
 ifneq ($(MISSING_MODULES),)
@@ -228,16 +230,18 @@ endif
 # Note that this path will typically contain a double-slash at the WORK_DIR boundary; this must be
 # preserved as it is used below to get the absolute path for the module.mk file correct.
 #
-MODULE_OBJS		:= $(foreach path,$(dir $(MODULE_MKFILES)),$(WORK_DIR)$(path)module.pre.o)
+//建立一个我们希望从module编译后得到的object 的文件的列表，这个路径将会包含一个双斜线 在WORK_DIR 边界，这个必须被保护，因为他被用来找到正确的module.mk文件的绝对路径
+MODULE_OBJS		:= $(foreach path,$(dir $(MODULE_MKFILES)),$(WORK_DIR)$(path)module.pre.o) 
 
 # rules to build module objects
+//构建模块obj的规则
 .PHONY: $(MODULE_OBJS)
 $(MODULE_OBJS):		relpath = $(patsubst $(WORK_DIR)%,%,$@)
 $(MODULE_OBJS):		mkfile = $(patsubst %module.pre.o,%module.mk,$(relpath))
 $(MODULE_OBJS):		workdir = $(@D)
 $(MODULE_OBJS):		$(GLOBAL_DEPS) $(NUTTX_CONFIG_HEADER)
-	$(Q) $(MKDIR) -p $(workdir)
-	$(Q) $(MAKE) -r -f $(PX4_MK_DIR)module.mk \
+	$(Q) $(MKDIR) -p $(workdir) //创建workdir
+	$(Q) $(MAKE) -r -f $(PX4_MK_DIR)module.mk \  //make firmware/makefiles/module.mk  进去执行
 		--no-print-directory -C $(workdir) \
 		MODULE_WORK_DIR=$(workdir) \
 		MODULE_OBJ=$@ \
@@ -246,6 +250,7 @@ $(MODULE_OBJS):		$(GLOBAL_DEPS) $(NUTTX_CONFIG_HEADER)
 		module
 
 # make a list of phony clean targets for modules
+//创建一个列表来记录需要清理的中间文件
 MODULE_CLEANS		:= $(foreach path,$(dir $(MODULE_MKFILES)),$(WORK_DIR)$(path)/clean)
 
 # rules to clean modules
