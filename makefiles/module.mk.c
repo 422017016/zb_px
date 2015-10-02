@@ -190,7 +190,8 @@ CXXFLAGS	+= -fvisibility=$(DEFAULT_VISIBILITY) -include $(PX4_INCLUDE_DIR)visibi
 #
 # What we're going to build
 #
-module:			$(MODULE_OBJ) $(MODULE_COMMAND_FILES)
+//要build的
+module:			$(MODULE_OBJ) $(MODULE_COMMAND_FILES)//依赖是MODULE_OBJ 和MODULE_COMMAND_FILES
 
 #
 # Object files we will generate from sources
@@ -200,12 +201,13 @@ OBJS			 = $(addsuffix .o,$(SRCS))
 #
 # Dependency files that will be auto-generated
 #
+//addsuffix 添加后缀 在所有的源文件后添加 .d 的后缀代表depend
 DEPS			 = $(addsuffix .d,$(SRCS))
 
 #
 # SRCS -> OBJS rules
 #
-
+//OBJS 要依赖全局依赖
 $(OBJS):		$(GLOBAL_DEPS)
 
 vpath %.c $(MODULE_SRC)

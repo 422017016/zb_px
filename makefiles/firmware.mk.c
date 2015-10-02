@@ -272,10 +272,12 @@ $(MODULE_CLEANS):
 LIBRARY_SEARCH_DIRS	+= $(WORK_DIR) $(MODULE_SRC) $(PX4_MODULE_SRC)
 
 # sort and unique the library list
+//对库进行排序
 LIBRARIES		:= $(sort $(LIBRARIES))
 
 # locate the first instance of a library by full path or by looking on the
 # library search path
+//定位第一个库，使用完全地址或者查找库搜寻地址
 define LIBRARY_SEARCH
 	$(firstword $(abspath $(wildcard $(1)/library.mk)) \
 		$(abspath $(foreach search_dir,$(LIBRARY_SEARCH_DIRS),$(wildcard $(search_dir)/$(1)/library.mk))) \
@@ -283,6 +285,7 @@ define LIBRARY_SEARCH
 endef
 
 # make a list of library makefiles and check that we found them all
+//搜索所有的库文件的makefile并且记录下来
 LIBRARY_MKFILES		:= $(foreach library,$(LIBRARIES),$(call LIBRARY_SEARCH,$(library)))
 MISSING_LIBRARIES	:= $(subst MISSING_,,$(filter MISSING_%,$(LIBRARY_MKFILES)))
 ifneq ($(MISSING_LIBRARIES),)
@@ -293,6 +296,7 @@ endif
 # Note that this path will typically contain a double-slash at the WORK_DIR boundary; this must be
 # preserved as it is used below to get the absolute path for the library.mk file correct.
 #
+//制作一个archive文件的列表--我们希望从库文件建立的。注意这个路径将会包含一个双斜线在WORK_DIR边界，这个必须被保存因为它用来得到library.mk文件的正确的绝对路径
 LIBRARY_LIBS		:= $(foreach path,$(dir $(LIBRARY_MKFILES)),$(WORK_DIR)$(path)library.a)
 
 # rules to build module objects
@@ -328,7 +332,7 @@ $(LIBRARY_CLEANS):
 # ROMFS generation
 ################################################################################
 ifeq ($(PX4_TARGET_OS),nuttx)
-include $(MK_DIR)/nuttx/nuttx_romfs.mk
+include $(MK_DIR)/nuttx/nuttx_romfs.mk //如果存在nuttx_romfs.mk则进入执行
 endif
 
 ################################################################################
@@ -376,7 +380,7 @@ $(filter %.S.o,$(OBJS)): $(WORK_DIR)%.S.o: %.S $(GLOBAL_DEPS)
 #
 
 ifeq ($(PX4_TARGET_OS),nuttx)
-include $(MK_DIR)/nuttx/nuttx_px4.mk
+include $(MK_DIR)/nuttx/nuttx_px4.mk //执行具体os规则
 endif
 ifeq ($(PX4_TARGET_OS),posix)
 include $(MK_DIR)/posix/posix_elf.mk
